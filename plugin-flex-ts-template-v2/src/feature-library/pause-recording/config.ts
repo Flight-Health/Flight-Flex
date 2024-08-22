@@ -8,8 +8,7 @@ const {
   include_silence = false,
 } = (getFeatureFlags()?.features?.pause_recording as PauseRecordingConfig) || {};
 
-const { enabled: dualChannelEnabled = false, channel = 'worker' } =
-  getFeatureFlags()?.features?.dual_channel_recording || {};
+const { enabled: dualChannelEnabled = false, channel } = getFeatureFlags()?.features?.dual_channel_recording || {};
 
 export const isFeatureEnabled = () => {
   return enabled;
@@ -32,5 +31,5 @@ export const isDualChannelEnabled = () => {
 };
 
 export const getChannelToRecord = () => {
-  return channel.toLowerCase();
+  return channel;
 };

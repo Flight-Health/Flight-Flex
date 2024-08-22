@@ -18,7 +18,6 @@ export default abstract class Destination {
 
   metaData?: object | null | undefined;
 
-  // eslint-disable-next-line no-restricted-syntax
   constructor(opts: DestinationConstructor) {
     this.minLogLevel = opts.minLogLevel;
     this.metaData = opts.metaData === undefined ? {} : opts.metaData;

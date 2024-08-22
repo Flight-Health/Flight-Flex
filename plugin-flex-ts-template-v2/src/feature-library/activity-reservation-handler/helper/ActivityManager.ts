@@ -1,11 +1,9 @@
 import { Actions, Manager } from '@twilio/flex-ui';
 
 import { getSystemActivityNames, isFeatureEnabled } from '../config';
-import { FlexHelper } from '../../../utils/helpers';
+import FlexHelper from '../../../utils/flex-helper';
 import { CallbackPromise, PendingActivity } from '../types/ActivityManager';
 import { updatePendingActivity } from '../flex-hooks/reducers/ActivityReservationHandler';
-import AppState from '../../../types/manager/AppState';
-import { reduxNamespace } from '../../../utils/state';
 
 // collect the configured activity names from the configuration
 const systemActivityNames = getSystemActivityNames();
@@ -17,11 +15,10 @@ export const reservedSystemActivities: string[] = [
   systemActivityNames.onATaskNoAcd,
   systemActivityNames.wrapup,
   systemActivityNames.wrapupNoAcd,
-  systemActivityNames.extendedWrapup,
 ];
 
 const isSystemActivity = (activityName: string): boolean => {
-  return reservedSystemActivities.map((a) => a?.toLowerCase()).includes(activityName.toLowerCase());
+  return reservedSystemActivities.map((a) => a.toLowerCase()).includes(activityName.toLowerCase());
 };
 
 export const isWorkerCurrentlyInASystemActivity = async (): Promise<boolean> => {
@@ -39,7 +36,6 @@ class ActivityManager {
 
   private maxConcurrentRequests: number;
 
-  // eslint-disable-next-line no-restricted-syntax
   constructor(maxConcurrentRequests = 1) {
     this.currentRequests = [];
     this.runningRequests = 0;
@@ -107,22 +103,6 @@ class ActivityManager {
     return pendingActivity;
   };
 
-  // Checks if the provided reservation SID is in extended wrap up via the agent-automation feature
-  #getInExtendedWrapup = (reservationSid?: string): boolean => {
-    const state = Manager.getInstance().store.getState() as AppState;
-    const { extendedWrapup } = state[reduxNamespace];
-
-    if (!extendedWrapup) {
-      return false;
-    }
-
-    if (!extendedWrapup.extendedReservationSids || !extendedWrapup.extendedReservationSids.length) {
-      return false;
-    }
-
-    return !reservationSid || extendedWrapup.extendedReservationSids.includes(reservationSid);
-  };
-
   #tryNext = async () => {
     if (!this.currentRequests.length) {
     } else if (this.runningRequests < this.maxConcurrentRequests) {
@@ -175,7 +155,7 @@ class ActivityManager {
 
   // evaluates which state we should be in given an availability status
   #evaluateNewState = async (newAvailabilityStatus: boolean): Promise<string> => {
-    const { available, onATask, onATaskNoAcd, wrapup, wrapupNoAcd, extendedWrapup } = systemActivityNames;
+    const { available, onATask, onATaskNoAcd, wrapup, wrapupNoAcd } = systemActivityNames;
 
     const selectedTaskStatus = FlexHelper.getSelectedTaskStatus();
     const pendingActivity = this.#getPendingActivity();
@@ -199,7 +179,6 @@ class ActivityManager {
       if (newAvailabilityStatus) return onATask;
       if (!newAvailabilityStatus) return onATaskNoAcd;
     } else if (selectedTaskStatus === FlexHelper.RESERVATION_STATUS.WRAPPING) {
-      if (extendedWrapup && this.#getInExtendedWrapup(FlexHelper.getSelectedTaskSid())) return extendedWrapup;
       if (newAvailabilityStatus) return wrapup;
       if (!newAvailabilityStatus) return wrapupNoAcd;
     } else {
@@ -207,7 +186,6 @@ class ActivityManager {
       // tasks are in flight
       if (hasAcceptedTasks && newAvailabilityStatus) return onATask;
       if (hasAcceptedTasks && !newAvailabilityStatus) return onATaskNoAcd;
-      if (hasWrappingTasks && extendedWrapup && this.#getInExtendedWrapup()) return extendedWrapup;
       if (hasWrappingTasks && newAvailabilityStatus) return wrapup;
       if (hasWrappingTasks && !newAvailabilityStatus) return wrapupNoAcd;
       if (pendingActivity) return pendingActivity.name;

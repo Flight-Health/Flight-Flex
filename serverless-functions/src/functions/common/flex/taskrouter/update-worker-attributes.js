@@ -26,7 +26,7 @@ exports.handler = prepareFlexFunction(requiredParameters, async (context, event,
       workerSid,
       attributesUpdate,
     });
-    const { status, data: worker } = result;
+    const { status, worker } = result;
 
     response.setStatusCode(status);
     response.setBody({ worker, ...extractStandardResponse(result) });

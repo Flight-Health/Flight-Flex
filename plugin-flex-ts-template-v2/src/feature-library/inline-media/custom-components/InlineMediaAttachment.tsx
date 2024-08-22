@@ -3,7 +3,6 @@ import { styled } from '@twilio/flex-ui';
 
 interface OwnProps {
   media: any;
-  setFocus?: () => void;
 }
 
 const InlineImage = styled('img')`
@@ -31,7 +30,7 @@ const InlineAudio = styled('audio')`
   border-radius: 4px;
 `;
 
-const InlineMediaAttachment = ({ media, setFocus }: OwnProps) => {
+const InlineMediaAttachment = ({ media }: OwnProps) => {
   const [mediaUrl, setMediaUrl] = useState('');
 
   const fetchMediaUrl = async () => {
@@ -50,7 +49,7 @@ const InlineMediaAttachment = ({ media, setFocus }: OwnProps) => {
   );
 
   const renderAudio = () => (
-    <InlineAudio controls onMouseEnter={setFocus}>
+    <InlineAudio controls>
       <source src={mediaUrl} type={media.state.contentType} />
     </InlineAudio>
   );
@@ -58,7 +57,7 @@ const InlineMediaAttachment = ({ media, setFocus }: OwnProps) => {
   const renderPdf = () => <InlinePdf title={media.state.filename ?? 'PDF Preview'} src={mediaUrl} />;
 
   const renderVideo = () => (
-    <InlineVideo controls onMouseEnter={setFocus}>
+    <InlineVideo controls>
       <source src={mediaUrl} type={media.state.contentType} />
     </InlineVideo>
   );

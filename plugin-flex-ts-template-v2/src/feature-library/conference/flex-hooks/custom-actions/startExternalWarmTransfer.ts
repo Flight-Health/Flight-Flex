@@ -1,6 +1,6 @@
 import { Actions, ITask, Manager, Notifications, TaskHelper } from '@twilio/flex-ui';
 
-import ProgrammableVoiceService from '../../../../utils/serverless/ProgrammableVoice/ProgrammableVoiceService';
+import ConferenceService from '../../utils/ConferenceService';
 import { addConnectingParticipant } from '../states/ConferenceSlice';
 import { ConferenceNotification } from '../notifications/Conference';
 
@@ -29,7 +29,7 @@ export const registerStartExternalWarmTransfer = async () => {
       console.log(`Adding ${phoneNumber} to conference`);
       let participantCallSid;
       try {
-        participantCallSid = await ProgrammableVoiceService.addParticipant(mainConferenceSid, callerId, phoneNumber);
+        participantCallSid = await ConferenceService.addParticipant(mainConferenceSid, callerId, phoneNumber);
 
         Manager.getInstance().store.dispatch(
           addConnectingParticipant({

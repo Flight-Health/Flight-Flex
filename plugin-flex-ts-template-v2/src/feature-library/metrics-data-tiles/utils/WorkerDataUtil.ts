@@ -1,4 +1,5 @@
-import { ITask, Manager } from '@twilio/flex-ui';
+import { Manager } from '@twilio/flex-ui';
+import { SupervisorWorkerState } from '@twilio/flex-ui/src/state/State.definition';
 
 import { TeamActivityCounts, TeamTaskCounts } from '../types';
 
@@ -8,7 +9,7 @@ const workerActivities = _manager.store.getState().flex?.worker?.activities || n
 const STATUS_AVAILABLE = 'Available';
 const TASK_CHANNEL_VOICE = 'voice';
 
-export function getAgentStatusCounts(workers: any[] = [], teams: string[] = []) {
+export function getAgentStatusCounts(workers: SupervisorWorkerState[] = [], teams: string[] = []) {
   const ac: TeamActivityCounts = {};
   ac.All = { teamName: 'All', totalAgentCount: 0, activities: { Idle: 0, Busy: 0 } };
   ac.Other = { teamName: 'Other', totalAgentCount: 0, activities: { Idle: 0, Busy: 0 } };
@@ -58,7 +59,7 @@ export function getAgentStatusCounts(workers: any[] = [], teams: string[] = []) 
   return ac;
 }
 
-export function getTasksByTeamCounts(workers: any[] = [], teams: string[] = []) {
+export function getTasksByTeamCounts(workers: SupervisorWorkerState[] = [], teams: string[] = []) {
   const taskCounts: TeamTaskCounts = {};
   const initTasks = { voice_inbound: 0, voice_outbound: 0, sms: 0, chat: 0, video: 0 };
   taskCounts.All = { teamName: 'All', totalTaskCount: 0, tasks: { ...initTasks } };
@@ -74,7 +75,7 @@ export function getTasksByTeamCounts(workers: any[] = [], teams: string[] = []) 
     if (!teams.includes(teamName)) tm = 'Other';
     let channel = '';
     const tasks = wk?.tasks || [];
-    tasks.forEach((task: ITask) => {
+    tasks.forEach((task) => {
       if (task.taskChannelUniqueName === TASK_CHANNEL_VOICE) {
         channel = `voice_${task.attributes?.direction || 'inbound'}`;
       } else {

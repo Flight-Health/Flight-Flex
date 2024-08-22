@@ -35,7 +35,7 @@ exports.handler = prepareFlexFunction(requiredParameters, async (context, event,
       status: taskStatus,
     });
 
-    const { status, data: reservation } = result;
+    const { status, reservation } = result;
 
     response.setStatusCode(status);
     response.setBody({ reservation, ...extractStandardResponse(result) });

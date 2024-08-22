@@ -1,13 +1,14 @@
-const { isString, isObject } = require('lodash');
+const { isString, isObject, isNumber } = require('lodash');
 const axios = require('axios');
 
-const { executeWithRetry, twilioExecute } = require(Runtime.getFunctions()['common/helpers/function-helper'].path);
+const retryHandler = require(Runtime.getFunctions()['common/helpers/retry-handler'].path).retryHandler;
 
 const INFLIGHT = 'inflight';
 const COMPLETED = 'completed';
 
 /**
  * @param {object} parameters the parameters for the function
+ * @param {number} parameters.attempts the number of retry attempts performed
  * @param {object} parameters.context the context from calling lambda function
  * @param {string} parameters.channelSid the channel to be updated
  * @param {object} parameters.taskSid the taskSid to add to the channel attributes
@@ -25,32 +26,38 @@ exports.addTaskToChannel = async (parameters) => {
     throw new Error('Invalid parameters object passed. Parameters must contain channelSid string');
   if (!isString(taskSid)) throw new Error('Invalid parameters object passed. Parameters must contain taskSid string');
 
-  const channel = await twilioExecute(context, (client) =>
-    client.chat.services(context.TWILIO_FLEX_CHAT_SERVICE_SID).channels(channelSid).fetch(),
-  );
+  try {
+    const client = context.getTwilioClient();
+    const channel = await client.chat.services(context.TWILIO_FLEX_CHAT_SERVICE_SID).channels(channelSid).fetch();
 
-  if (!channel.success) {
-    return { success: false, message: 'channel not found' };
-  }
+    if (!channel) return { success: false, message: 'channel not found' };
 
-  const currentAttributes = JSON.parse(channel.data.attributes);
-  const associatedTasks = currentAttributes.associatedTasks || {};
-  associatedTasks[taskSid] = INFLIGHT;
-  const newAttributes = {
-    ...currentAttributes,
-    associatedTasks,
-  };
+    const currentAttributes = JSON.parse(channel.attributes);
+    const associatedTasks = currentAttributes.associatedTasks || {};
+    associatedTasks[taskSid] = INFLIGHT;
+    const newAttributes = {
+      ...currentAttributes,
+      associatedTasks,
+    };
 
-  return twilioExecute(context, (client) =>
-    client.chat
+    const updatedChannel = await client.chat
       .services(context.TWILIO_FLEX_CHAT_SERVICE_SID)
       .channels(channelSid)
-      .update({ attributes: JSON.stringify(newAttributes) }),
-  );
+      .update({ attributes: JSON.stringify(newAttributes) });
+
+    return {
+      success: true,
+      status: 200,
+      channel: updatedChannel,
+    };
+  } catch (error) {
+    return retryHandler(error, parameters, exports.addTaskToChannel);
+  }
 };
 
 /**
  * @param {object} parameters the parameters for the function
+ * @param {number} parameters.attempts the number of retry attempts performed
  * @param {object} parameters.context the context from calling lambda function
  * @param {string} parameters.channelSid the channel to be updated
  * @param {object} parameters.taskSid the taskSid to add to the channel attributes
@@ -67,37 +74,43 @@ exports.setTaskToCompleteOnChannel = async (parameters) => {
     throw new Error('Invalid parameters object passed. Parameters must contain channelSid string');
   if (!isString(taskSid)) throw new Error('Invalid parameters object passed. Parameters must contain taskSid string');
 
-  const channel = await twilioExecute(context, (client) =>
-    client.chat.services(context.TWILIO_FLEX_CHAT_SERVICE_SID).channels(channelSid).fetch(),
-  );
+  try {
+    const client = context.getTwilioClient();
+    const channel = await client.chat.services(context.TWILIO_FLEX_CHAT_SERVICE_SID).channels(channelSid).fetch();
 
-  if (!channel.success) {
-    return { success: false, message: 'channel not found' };
-  }
+    if (!channel) return { success: false, message: 'channel not found' };
 
-  const currentAttributes = JSON.parse(channel.attributes);
-  const associatedTasks = currentAttributes.associatedTasks || {};
-  associatedTasks[taskSid] = COMPLETED;
-  const newAttributes = {
-    ...currentAttributes,
-    associatedTasks,
-  };
+    const currentAttributes = JSON.parse(channel.attributes);
+    const associatedTasks = currentAttributes.associatedTasks || {};
+    associatedTasks[taskSid] = COMPLETED;
+    const newAttributes = {
+      ...currentAttributes,
+      associatedTasks,
+    };
 
-  return twilioExecute(context, (client) =>
-    client.chat
+    const updatedChannel = await client.chat
       .services(context.TWILIO_FLEX_CHAT_SERVICE_SID)
       .channels(channelSid)
-      .update({ attributes: JSON.stringify(newAttributes) }),
-  );
+      .update({ attributes: JSON.stringify(newAttributes) });
+
+    return {
+      success: true,
+      status: 200,
+      channel: updatedChannel,
+    };
+  } catch (error) {
+    return retryHandler(error, parameters, exports.setTaskToCompleteOnChannel);
+  }
 };
 
 /**
  * @param {object} parameters the parameters for the function
+ * @param {number} parameters.attempts the number of retry attempts performed
  * @param {object} parameters.context the context from calling lambda function
  * @param {object} parameters.taskSid the taskSid to add to the channel attributes
  * @returns {object} An object containing an array of queues for the account
  * @description the following method is used to remove the chat channelSid
- *  from the task, this is required when transferring tasks as the channel
+ *  from the task, this is required when transfering tasks as the channel
  *  janitor will clean up chat channels if a task is completed that has
  *  a channel sid.
  */
@@ -107,15 +120,15 @@ exports.removeChannelSidFromTask = async function removeChannelSidFromTask(param
   if (!isObject(context)) throw new Error('Invalid parameters object passed. Parameters must contain context object');
   if (!isString(taskSid)) throw new Error('Invalid parameters object passed. Parameters must contain taskSid string');
 
-  const taskContextURL = `https://taskrouter.twilio.com/v1/Workspaces/${process.env.TWILIO_FLEX_WORKSPACE_SID}/Tasks/${taskSid}`;
-  const config = {
-    auth: {
-      username: context.ACCOUNT_SID,
-      password: context.AUTH_TOKEN,
-    },
-  };
+  try {
+    const taskContextURL = `https://taskrouter.twilio.com/v1/Workspaces/${process.env.TWILIO_FLEX_WORKSPACE_SID}/Tasks/${taskSid}`;
+    const config = {
+      auth: {
+        username: context.ACCOUNT_SID,
+        password: context.AUTH_TOKEN,
+      },
+    };
 
-  return executeWithRetry(context, async () => {
     // we need to fetch the task using a rest API because
     // we need to examine the headers to get the ETag
     const getResponse = await axios.get(taskContextURL, config);
@@ -141,8 +154,14 @@ exports.removeChannelSidFromTask = async function removeChannelSidFromTask(param
     task = (await axios.post(taskContextURL, data, config)).data;
 
     return {
-      ...task,
-      attributes: JSON.parse(task.attributes),
+      success: true,
+      status: 200,
+      task: {
+        ...task,
+        attributes: JSON.parse(task.attributes),
+      },
     };
-  });
+  } catch (error) {
+    return retryHandler(error, parameters, exports.removeChannelSidFromTask);
+  }
 };

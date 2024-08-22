@@ -14,7 +14,6 @@ import { isFeatureEnabled, getServerlessDomain } from '../config';
 class ScheduleManagerService extends ApiService {
   readonly scheduleManagerServerlessDomain: string;
 
-  // eslint-disable-next-line no-restricted-syntax
   constructor() {
     super();
 

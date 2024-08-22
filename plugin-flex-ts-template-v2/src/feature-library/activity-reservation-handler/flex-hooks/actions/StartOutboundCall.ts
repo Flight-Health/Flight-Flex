@@ -3,7 +3,7 @@ import * as Flex from '@twilio/flex-ui';
 import { FlexActionEvent, FlexAction } from '../../../../types/feature-loader';
 import ActivityManager, { isWorkerCurrentlyInASystemActivity } from '../../helper/ActivityManager';
 import { getSystemActivityNames } from '../../config';
-import { FlexHelper } from '../../../../utils/helpers';
+import FlexHelper from '../../../../utils/flex-helper';
 
 export const actionEvent = FlexActionEvent.before;
 export const actionName = FlexAction.StartOutboundCall;

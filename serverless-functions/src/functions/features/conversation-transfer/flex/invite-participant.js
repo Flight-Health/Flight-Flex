@@ -1,4 +1,6 @@
-const { prepareFlexFunction, twilioExecute } = require(Runtime.getFunctions()['common/helpers/function-helper'].path);
+const { prepareFlexFunction } = require(Runtime.getFunctions()['common/helpers/function-helper'].path);
+const ConversationsOperations = require(Runtime.getFunctions()['common/twilio-wrappers/conversations'].path);
+const InteractionsOperations = require(Runtime.getFunctions()['common/twilio-wrappers/interactions'].path);
 
 const requiredParameters = [
   {
@@ -96,15 +98,18 @@ exports.handler = prepareFlexFunction(requiredParameters, async (context, event,
       workersToIgnore,
     );
 
+    const participantCreateInviteParams = {
+      routing: routingParams,
+      interactionSid: flexInteractionSid,
+      channelSid: flexInteractionChannelSid,
+      context,
+    };
+
     const {
       success,
       message = '',
-      data: participantInvite = null,
-    } = await twilioExecute(context, (client) =>
-      client.flexApi.v1.interaction(flexInteractionSid).channels(flexInteractionChannelSid).invites.create({
-        routing: routingParams,
-      }),
-    );
+      participantInvite = null,
+    } = await InteractionsOperations.participantCreateInvite(participantCreateInviteParams);
 
     // if this failed bail out so we don't remove the agent from the conversation and no one else joins
     if (!success) {
@@ -112,37 +117,38 @@ exports.handler = prepareFlexFunction(requiredParameters, async (context, event,
     }
 
     if (removeFlexInteractionParticipantSid) {
-      await twilioExecute(context, (client) =>
-        client.flexApi.v1
-          .interaction(flexInteractionSid)
-          .channels(flexInteractionChannelSid)
-          .participants(removeFlexInteractionParticipantSid)
-          .update({ status: 'closed' }),
-      );
+      await InteractionsOperations.participantUpdate({
+        status: 'closed',
+        interactionSid: flexInteractionSid,
+        channelSid: flexInteractionChannelSid,
+        participantSid: removeFlexInteractionParticipantSid,
+        context,
+      });
     } else {
       // Add invite to conversation attributes
       const inviteTargetType = transferTargetSid.startsWith('WK') ? 'Worker' : 'Queue';
-      const conversation = await twilioExecute(context, (client) =>
-        client.conversations.v1.conversations(conversationSid).fetch(),
-      );
-      const currentAttributes = JSON.parse(conversation.data.attributes);
-      await twilioExecute(context, (client) =>
-        client.conversations.v1.conversations(conversationSid).update({
-          attributes: JSON.stringify({
-            ...currentAttributes,
-            invites: {
-              ...currentAttributes.invites,
-              [participantInvite.routing.properties.sid]: {
-                invitesTaskSid: participantInvite.routing.properties.sid,
-                targetSid: transferTargetSid,
-                timestampCreated: new Date(),
-                targetName: inviteTargetType === 'Queue' ? transferQueueName : transferWorkerName,
-                inviteTargetType,
-              },
+      const conversation = await ConversationsOperations.getConversation({
+        conversationSid,
+        context,
+      });
+      const currentAttributes = JSON.parse(conversation.conversation.attributes);
+      await ConversationsOperations.updateAttributes({
+        conversationSid,
+        attributes: JSON.stringify({
+          ...currentAttributes,
+          invites: {
+            ...currentAttributes.invites,
+            [participantInvite.routing.properties.sid]: {
+              invitesTaskSid: participantInvite.routing.properties.sid,
+              targetSid: transferTargetSid,
+              timestampCreated: new Date(),
+              targetName: inviteTargetType === 'Queue' ? transferQueueName : transferWorkerName,
+              inviteTargetType,
             },
-          }),
+          },
         }),
-      );
+        context,
+      });
     }
 
     response.setStatusCode(200);

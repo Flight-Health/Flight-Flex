@@ -1,3 +1,4 @@
+/* eslint-disable no-negated-condition */
 import React from 'react';
 import { IconButton } from '@twilio/flex-ui';
 
@@ -7,7 +8,7 @@ class AudioRecorder extends React.Component {
   state = {
     showRecorder: false,
     lastAudioFile: null,
-    playbackBlobUrl: '',
+    blobURL: '',
   };
 
   dismiss = () => this.setState({ showRecorder: false });
@@ -20,9 +21,9 @@ class AudioRecorder extends React.Component {
     }
   };
 
-  // Callback function to update latestAudioFile and playbackBlobUrl
-  updateLatestAudioFile = (audioFile: any, playbackBlobUrl: any) => {
-    this.setState({ lastAudioFile: audioFile, playbackBlobUrl });
+  // Callback function to update latestAudioFile and blobURL
+  updateLatestAudioFile = (audioFile: any, blobURL: any) => {
+    this.setState({ lastAudioFile: audioFile, blobURL });
   };
 
   render() {
@@ -35,7 +36,7 @@ class AudioRecorder extends React.Component {
             openHideRecorder={this.openHideRecorder}
             updateLatestAudioFile={this.updateLatestAudioFile}
             lastAudioFile={this.state.lastAudioFile}
-            playbackBlobUrl={this.state.playbackBlobUrl}
+            blobURL={this.state.blobURL}
           />
         ) : (
           <></>

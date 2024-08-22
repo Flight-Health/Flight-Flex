@@ -13,13 +13,9 @@ If using the notification feature it is advised that you copy the custom compone
 
 ## flex-user-experience
 
-Performing a cold transfer to another worker:
+An example using warm transfer
 
-![Chat cold transfer demo](/img/features/chat-transfer/cold-transfer.gif)
-
-Performing a warm transfer to another queue:
-
-![Chat warm transfer demo](/img/features/chat-transfer/warm-transfer.gif)
+![alt text](/img/features/chat-transfer/flex-user-experience-warm-transfer-full.gif)
 
 ## setup and dependencies
 

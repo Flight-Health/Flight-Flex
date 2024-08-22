@@ -13,7 +13,7 @@ class HangUpByService extends ApiService {
       const encodedParams: EncodedParams = {
         conference: encodeURIComponent(conferenceSid),
         participant: encodeURIComponent(participantSid),
-        Token: encodeURIComponent(this.manager.user.token),
+        Token: encodeURIComponent(this.manager.store.getState().flex.session.ssoTokenPayload.token),
       };
 
       this.fetchJsonWithReject<ParticipantResponse>(

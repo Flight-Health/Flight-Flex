@@ -1,16 +1,17 @@
 const { isString, omitBy, isNil, merge } = require('lodash');
 const axios = require('axios');
 
-const { executeWithRetry } = require(Runtime.getFunctions()['common/helpers/function-helper'].path);
+const retryHandler = require(Runtime.getFunctions()['common/helpers/retry-handler'].path).retryHandler;
 
 /**
  * @param {object} parameters the parameters for the function
+ * @param {number} parameters.attempts the number of retry attempts performed
  * @param {object} parameters.context the context from calling lambda function
  * @returns {object} the current configuration
  * @description fetches current config from flex api
  */
-exports.fetchUiAttributes = async function fetchUiAttributes(parameters) {
-  return executeWithRetry(parameters.context, async () => {
+exports.fetchUiAttributes = async function fetchConfiguration(parameters) {
+  try {
     const configUrl = 'https://flex-api.twilio.com/v1/Configuration';
     const config = {
       auth: {
@@ -21,15 +22,21 @@ exports.fetchUiAttributes = async function fetchUiAttributes(parameters) {
 
     const getResponse = await axios.get(configUrl, config);
 
-    return getResponse?.data?.ui_attributes;
-  });
+    return {
+      success: true,
+      status: 200,
+      configuration: getResponse?.data?.ui_attributes,
+    };
+  } catch (error) {
+    return retryHandler(error, parameters, exports.fetchUiAttributes);
+  }
 };
 
 /**
  * @param {object} parameters the parameters for the function
+ * @param {number} parameters.attempts the number of retry attempts performed
  * @param {object} parameters.context the context from calling lambda function
  * @param {object} parameters.attributesUpdate the attributes to update
- * @param {string} parameters.mergeFeature boolean string, whether we should overwrite or merge with existing config
  * @returns {object} https://www.twilio.com/docs/lookup/v2-api#making-a-request
  * @description updates config using flex api
  */
@@ -39,7 +46,7 @@ exports.updateUiAttributes = async function updateUiAttributes(parameters) {
   if (!isString(attributesUpdate))
     throw new Error('Invalid parameters object passed. Parameters must contain attributesUpdate string');
 
-  return executeWithRetry(parameters.context, async () => {
+  try {
     const configUrl = 'https://flex-api.twilio.com/v1/Configuration';
     const config = {
       auth: {
@@ -73,6 +80,12 @@ exports.updateUiAttributes = async function updateUiAttributes(parameters) {
     );
     const postResponse = await axios.post(configUrl, updatedAttributes, config);
 
-    return postResponse?.data?.ui_attributes;
-  });
+    return {
+      success: true,
+      status: 200,
+      configuration: postResponse?.data?.ui_attributes,
+    };
+  } catch (error) {
+    return retryHandler(error, parameters, exports.updateUiAttributes);
+  }
 };

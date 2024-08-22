@@ -1,4 +1,5 @@
-const { prepareFlexFunction, twilioExecute } = require(Runtime.getFunctions()['common/helpers/function-helper'].path);
+const { prepareFlexFunction } = require(Runtime.getFunctions()['common/helpers/function-helper'].path);
+const VideoOperations = require(Runtime.getFunctions()['common/twilio-wrappers/programmable-video'].path);
 
 const requiredParameters = [
   {
@@ -11,9 +12,10 @@ exports.handler = prepareFlexFunction(requiredParameters, async (context, event,
   try {
     const { roomSid } = event;
 
-    const roomResult = await twilioExecute(context, (client) =>
-      client.video.v1.rooms(roomSid).update({ status: 'completed' }),
-    );
+    const roomResult = await VideoOperations.completeRoom({
+      context,
+      roomSid,
+    });
 
     response.setStatusCode(roomResult.status);
     response.setBody({ success: roomResult.success });

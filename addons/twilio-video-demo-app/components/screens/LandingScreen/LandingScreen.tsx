@@ -162,6 +162,7 @@ export default function LandingScreen({}) {
                       ref={buttonRef}
                       type="submit"
                       variant="destructive"
+                      style={{ background: "#F22F46" }}
                     >
                       Next
                     </Button>

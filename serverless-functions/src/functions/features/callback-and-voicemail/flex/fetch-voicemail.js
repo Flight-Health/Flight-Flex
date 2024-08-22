@@ -12,9 +12,9 @@ exports.handler = prepareFlexFunction(requiredParameters, async (context, event,
       recordingSid,
     });
 
-    const { data, status } = result;
+    const { recording, status, type } = result;
     response.setStatusCode(status);
-    response.setBody({ ...data });
+    response.setBody({ recording, type });
 
     return callback(null, response);
   } catch (error) {

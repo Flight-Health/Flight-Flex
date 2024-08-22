@@ -18,7 +18,6 @@ export default abstract class ApiService {
 
   protected manager = Flex.Manager.getInstance();
 
-  // eslint-disable-next-line no-restricted-syntax
   constructor() {
     const custom_data = getFeatureFlags() || {};
 

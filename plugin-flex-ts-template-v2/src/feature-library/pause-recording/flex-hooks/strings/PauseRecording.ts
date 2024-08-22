@@ -13,7 +13,6 @@ export enum StringTemplates {
   RESUME_FAILED = 'PSResumeRecordingFailed',
   PAUSE_TOOLTIP = 'PSPauseRecordingTooltip',
   RESUME_TOOLTIP = 'PSResumeRecordingTooltip',
-  MISSING_RECORDING = 'PSPauseMissingRecording',
 }
 
 export const stringHook = () => ({
@@ -26,7 +25,6 @@ export const stringHook = () => ({
     [StringTemplates.RESUME_FAILED]: 'Failed to resume call recording. Please try again.',
     [StringTemplates.PAUSE_TOOLTIP]: 'Pause Recording',
     [StringTemplates.RESUME_TOOLTIP]: 'Resume Recording',
-    [StringTemplates.MISSING_RECORDING]: 'This call is not being recorded, so there is no recording to pause.',
   },
   'es-MX': esMX,
   'pt-BR': ptBR,

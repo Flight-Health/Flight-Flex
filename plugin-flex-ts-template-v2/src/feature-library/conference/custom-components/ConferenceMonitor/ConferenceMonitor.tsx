@@ -1,7 +1,7 @@
 import { Actions, ConferenceParticipant, ITask } from '@twilio/flex-ui';
 import * as React from 'react';
 
-import ProgrammableVoiceService from '../../../../utils/serverless/ProgrammableVoice/ProgrammableVoiceService';
+import ConferenceService from '../../utils/ConferenceService';
 import { isConferenceEnabledWithoutNativeXWT, isHoldWorkaroundEnabled } from '../../config';
 
 export interface OwnProps {
@@ -154,7 +154,7 @@ class ConferenceMonitor extends React.Component {
       });
     }
 
-    await ProgrammableVoiceService.setEndConferenceOnExit(conferenceSid, participant.callSid, endConferenceOnExit);
+    await ConferenceService.setEndConferenceOnExit(conferenceSid, participant.callSid, endConferenceOnExit);
 
     if (doWorkaround) {
       await Actions.invokeAction('HoldParticipant', {

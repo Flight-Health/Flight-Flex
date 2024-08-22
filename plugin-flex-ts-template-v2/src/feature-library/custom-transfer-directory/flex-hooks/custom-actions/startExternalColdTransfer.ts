@@ -2,7 +2,7 @@ import { Actions, ITask, Notifications, TaskHelper } from '@twilio/flex-ui';
 
 import { shouldSkipPhoneNumberValidation } from '../../config';
 import PhoneNumberService from '../../../../utils/serverless/PhoneNumbers/PhoneNumberService';
-import ProgrammableVoiceService from '../../../../utils/serverless/ProgrammableVoice/ProgrammableVoiceService';
+import CustomTransferDirectoryService from '../../utils/CustomTransferDirectoryService';
 import { CustomTransferDirectoryNotification } from '../notifications/CustomTransferDirectory';
 
 export const registerStartExternalColdTransfer = async () => {
@@ -40,7 +40,7 @@ export const registerStartExternalColdTransfer = async () => {
       }
 
       try {
-        await ProgrammableVoiceService.startColdTransfer(
+        await CustomTransferDirectoryService.startColdTransfer(
           task?.attributes?.call_sid ?? task.attributes.conference.participants.customer,
           phoneNumber,
           callerId,

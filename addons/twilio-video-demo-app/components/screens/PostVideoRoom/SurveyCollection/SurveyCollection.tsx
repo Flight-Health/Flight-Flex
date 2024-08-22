@@ -178,6 +178,7 @@ export default function SurveyCollection({}) {
             <Button
               type="submit"
               variant="primary"
+              style={{ background: "#F22F46" }}
               onClick={async () => await submitSurveyResponse()}
               disabled={hasSubmitted}
             >

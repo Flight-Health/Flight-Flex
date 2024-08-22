@@ -19,7 +19,6 @@ export default abstract class LiveQueryHelper<T> {
   #initializing?: Promise<LiveQuery>;
 
   // For queryExpression syntax, see: https://www.twilio.com/docs/sync/live-query
-  // eslint-disable-next-line no-restricted-syntax
   constructor(indexName: string, queryExpression: string) {
     this.indexName = indexName;
     this.queryExpression = queryExpression;

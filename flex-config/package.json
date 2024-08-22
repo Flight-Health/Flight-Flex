@@ -2,9 +2,9 @@
   "name": "flex-configuration",
   "version": "1.0.0",
   "description": "CLI tool for merging new data into Flex configuration",
-  "main": "index.mjs",
+  "main": "index.js",
   "scripts": {
-    "deploy": "node index.mjs"
+    "deploy": "node index.js"
   },
   "author": "",
   "license": "ISC",
